@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Power BI Embedded - Python Demo</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.23.1/dist/powerbi.min.js"></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f6f8;
+        }
+
+        .header {
+            height: 58px;
+            display: flex;
+            align-items: center;
+            padding: 0 22px;
+            background: #ffffff;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+        }
+
+        #reportContainer {
+            height: calc(100vh - 59px);
+            width: 100%;
+        }
+
+        #status {
+            padding: 20px;
+            color: #444;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">GPS Education — Power BI Dashboard</div>
+    <div id="status">Loading Power BI...</div>
+    <div id="reportContainer"></div>
+
+    <script>
+        async function loadReport() {
+            const status = document.getElementById("status");
+            const container = document.getElementById("reportContainer");
+
+            try {
+                const response = await fetch("/api/powerbi");
+                const config = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(config.error || "Power BI configuration failed.");
+                }
+
+                status.style.display = "none";
+
+                const models = window['powerbi-client'].models;
+
+                const embedConfig = {
+                    type: "report",
+                    id: config.id,
+                    embedUrl: config.embedUrl,
+                    accessToken: config.accessToken,
+                    tokenType: models.TokenType.Embed,
+                    permissions: models.Permissions.Read,
+                    pageView: "fitToWidth",
+                    settings: {
+                        panes: {
+                            filters: { visible: false },
+                            pageNavigation: { visible: true }
+                        },
+                        background: models.BackgroundType.Transparent
+                    }
+                };
+
+                powerbi.embed(container, embedConfig);
+
+            } catch (error) {
+                status.textContent = "Error: " + error.message;
+                console.error(error);
+            }
+        }
+
+        loadReport();
+    </script>
+</body>
+</html>
